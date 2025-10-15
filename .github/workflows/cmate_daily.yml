@@ -2,22 +2,20 @@ name: Coinmate BTC-CZK Daily Logger
 
 on:
   schedule:
-    # Spouští se každý den v 00:01 UTC
-    - cron: "1 0 * * *"
-  workflow_dispatch:  # možnost ručního spuštění
+    # Spouští se každý den ve 00:00 UTC
+    - cron: "0 00 * * *"
+  workflow_dispatch:  # ruční spuštění
 
 jobs:
   run-cmate-script:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # umožní commit do repozitáře
+      contents: write  # ✅ povolí zápis do repozitáře
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          persist-credentials: false  # ✅ zabrání konfliktu s vlastním git push
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -27,16 +25,14 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Run Python script
+      - name: Run cmate_btc_czk.py
         run: python cmate_btc_czk.py
 
       - name: Commit and push updated JSON
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add cmate_btc_data.json
-          # commit se provede jen pokud je co commitovat
+          # ✅ commit jen pokud došlo ke změně
           git diff --cached --quiet || git commit -m "Auto update BTC price ($(date '+%Y-%m-%d %H:%M:%S'))"
           git push
