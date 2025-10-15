@@ -3,7 +3,7 @@ name: Coinmate BTC-CZK Daily Logger
 on:
   schedule:
     # Spouští se každý den ve 00:00 UTC
-    - cron: "0 00 * * *"
+    - cron: "0 0 * * *"
   workflow_dispatch:  # ruční spuštění
 
 jobs:
