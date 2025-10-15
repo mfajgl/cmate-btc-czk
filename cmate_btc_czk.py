@@ -4,13 +4,8 @@ import requests
 from datetime import datetime
 from zoneinfo import ZoneInfo  # ✅ pro český čas
 
-# URL Coinmate API pro cenu BTC/CZK
 URL = "https://coinmate.io/api/ticker?currencyPair=BTC_CZK"
-
-# Název JSON souboru, kam se ukládají data
 DATA_FILE = "cmate_btc_data.json"
-
-# Maximální počet záznamů v souboru
 MAX_ENTRIES = 45
 
 
@@ -27,10 +22,17 @@ def fetch_btc_price():
 
 
 def load_data():
-    """Načte existující JSON data (nebo vytvoří nový seznam)."""
+    """Načte existující JSON data (bez pádu, i když je prázdný)."""
     if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+                if not content:
+                    return []
+                return json.loads(content)
+        except json.JSONDecodeError:
+            print("⚠️ Poškozený JSON – vytvářím nový soubor.")
+            return []
     return []
 
 
@@ -46,24 +48,15 @@ def main():
         print("⚠️ Cena BTC nebyla získána.")
         return
 
-    # ✅ aktuální čas v české zóně (automaticky CEST/CET)
     local_time = datetime.now(ZoneInfo("Europe/Prague")).strftime("%Y-%m-%d %H:%M:%S")
 
-    # načti existující data
     data = load_data()
-
-    # přidej nový záznam
-    new_entry = {
-        "time": local_time,
-        "price_czk": price
-    }
+    new_entry = {"time": local_time, "price_czk": price}
     data.append(new_entry)
 
-    # omez na posledních 45 záznamů
     if len(data) > MAX_ENTRIES:
         data = data[-MAX_ENTRIES:]
 
-    # ulož zpět
     save_data(data)
 
     print(f"✅ Uloženo {len(data)} záznamů. Poslední cena: {price} CZK ({local_time})")
